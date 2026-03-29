@@ -1,0 +1,1019 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PROJECT NULL</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;700;900&family=VT323&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #020505;
+    --surface: #050e0e;
+    --border: #0f2e2e;
+    --green: #00ff9d;
+    --green-dim: #00a866;
+    --green-glow: rgba(0,255,157,0.15);
+    --red: #ff2d55;
+    --amber: #ffb800;
+    --text: #c8ffe8;
+    --muted: #3a6b5a;
+    --font-mono: 'Share Tech Mono', monospace;
+    --font-display: 'Orbitron', monospace;
+    --font-vt: 'VT323', monospace;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html, body {
+    height: 100%;
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-mono);
+    overflow-x: hidden;
+    cursor: default;
+  }
+
+  /* scanlines overlay */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: repeating-linear-gradient(
+      to bottom,
+      transparent 0px,
+      transparent 3px,
+      rgba(0,0,0,0.18) 3px,
+      rgba(0,0,0,0.18) 4px
+    );
+    pointer-events: none;
+    z-index: 9999;
+  }
+
+  /* noise overlay */
+  body::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 9998;
+    opacity: 0.4;
+  }
+
+  /* grid bg */
+  .grid-bg {
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(0,255,157,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,255,157,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* ─── PAGES ─── */
+  .page {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    z-index: 10;
+    transition: opacity 0.6s ease, transform 0.6s ease;
+  }
+  .page.hidden {
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(20px);
+  }
+
+  /* ─── HOME ─── */
+  #home {
+    text-align: center;
+    gap: 0;
+  }
+
+  .null-badge {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 6px;
+    color: var(--muted);
+    text-transform: uppercase;
+    margin-bottom: 32px;
+    border: 1px solid var(--border);
+    padding: 6px 18px;
+    display: inline-block;
+    animation: flicker 4s infinite;
+  }
+
+  .title-wrap {
+    position: relative;
+    margin-bottom: 8px;
+  }
+
+  .main-title {
+    font-family: var(--font-display);
+    font-weight: 900;
+    font-size: clamp(48px, 10vw, 96px);
+    letter-spacing: 12px;
+    color: var(--green);
+    text-shadow:
+      0 0 20px rgba(0,255,157,0.8),
+      0 0 60px rgba(0,255,157,0.3),
+      0 0 120px rgba(0,255,157,0.1);
+    position: relative;
+    display: inline-block;
+    animation: titlePulse 3s ease-in-out infinite;
+  }
+
+  .main-title::before,
+  .main-title::after {
+    content: attr(data-text);
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+  }
+  .main-title::before {
+    color: var(--red);
+    clip-path: polygon(0 30%, 100% 30%, 100% 50%, 0 50%);
+    animation: glitch1 3s infinite;
+    text-shadow: -3px 0 var(--red);
+  }
+  .main-title::after {
+    color: #00cfff;
+    clip-path: polygon(0 60%, 100% 60%, 100% 80%, 0 80%);
+    animation: glitch2 3s infinite;
+    text-shadow: 3px 0 #00cfff;
+  }
+
+  .subtitle {
+    font-family: var(--font-vt);
+    font-size: clamp(18px, 3vw, 28px);
+    color: var(--green-dim);
+    letter-spacing: 3px;
+    margin-top: 20px;
+    margin-bottom: 12px;
+    animation: subGlitch 6s infinite;
+  }
+
+  .prize-line {
+    font-family: var(--font-mono);
+    font-size: 13px;
+    color: var(--amber);
+    letter-spacing: 4px;
+    margin-bottom: 56px;
+    opacity: 0.85;
+  }
+  .prize-line span {
+    font-size: 16px;
+    font-weight: bold;
+  }
+
+  /* ─── BUTTONS ─── */
+  .btn {
+    font-family: var(--font-display);
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 6px;
+    text-transform: uppercase;
+    color: var(--bg);
+    background: var(--green);
+    border: none;
+    padding: 16px 48px;
+    cursor: pointer;
+    position: relative;
+    clip-path: polygon(8px 0%, 100% 0%, calc(100% - 8px) 100%, 0% 100%);
+    transition: all 0.2s;
+    outline: none;
+  }
+  .btn::before {
+    content: '';
+    position: absolute;
+    inset: -2px;
+    background: var(--green);
+    clip-path: polygon(8px 0%, 100% 0%, calc(100% - 8px) 100%, 0% 100%);
+    z-index: -1;
+    filter: blur(10px);
+    opacity: 0;
+    transition: opacity 0.2s;
+  }
+  .btn:hover { background: #00ffb3; transform: translateY(-2px); }
+  .btn:hover::before { opacity: 0.6; }
+  .btn:active { transform: translateY(0); }
+
+  .btn-secondary {
+    background: transparent;
+    color: var(--green);
+    border: 1px solid var(--green);
+    clip-path: none;
+    padding: 12px 36px;
+  }
+  .btn-secondary:hover { background: var(--green-glow); }
+
+  /* ─── PUZZLE CONTAINER ─── */
+  #puzzle-page {
+    align-items: center;
+    justify-content: flex-start;
+    padding-top: 40px;
+    overflow-y: auto;
+    height: 100%;
+  }
+
+  .puzzle-shell {
+    width: 100%;
+    max-width: 700px;
+    margin: 0 auto;
+  }
+
+  /* progress bar */
+  .progress-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 36px;
+    padding: 0 4px;
+  }
+  .progress-label {
+    font-size: 11px;
+    letter-spacing: 3px;
+    color: var(--muted);
+    white-space: nowrap;
+  }
+  .progress-track {
+    flex: 1;
+    height: 2px;
+    background: var(--border);
+    position: relative;
+  }
+  .progress-fill {
+    height: 100%;
+    background: var(--green);
+    box-shadow: 0 0 8px var(--green);
+    transition: width 0.6s cubic-bezier(.4,0,.2,1);
+  }
+  .level-dots {
+    display: flex;
+    gap: 6px;
+  }
+  .ldot {
+    width: 8px; height: 8px;
+    border: 1px solid var(--muted);
+    border-radius: 50%;
+    transition: all 0.3s;
+  }
+  .ldot.active {
+    background: var(--green);
+    border-color: var(--green);
+    box-shadow: 0 0 6px var(--green);
+  }
+
+  /* puzzle card */
+  .puzzle-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 36px 40px;
+    position: relative;
+    animation: cardIn 0.5s ease both;
+  }
+  .puzzle-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--green), transparent);
+  }
+
+  .level-tag {
+    font-size: 10px;
+    letter-spacing: 5px;
+    color: var(--green);
+    margin-bottom: 4px;
+    opacity: 0.7;
+  }
+  .puzzle-title {
+    font-family: var(--font-display);
+    font-size: 20px;
+    font-weight: 700;
+    letter-spacing: 3px;
+    color: var(--text);
+    margin-bottom: 28px;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 16px;
+  }
+
+  .puzzle-content {
+    margin-bottom: 28px;
+    line-height: 1.8;
+    font-size: 15px;
+  }
+
+  .code-block {
+    background: #030b0b;
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--green-dim);
+    padding: 20px 24px;
+    font-family: var(--font-mono);
+    font-size: 13px;
+    color: #7fffd4;
+    white-space: pre;
+    overflow-x: auto;
+    margin: 16px 0;
+    line-height: 1.7;
+  }
+
+  .sequence-display {
+    font-family: var(--font-vt);
+    font-size: 32px;
+    letter-spacing: 8px;
+    color: var(--green);
+    text-align: center;
+    padding: 24px;
+    background: #030b0b;
+    border: 1px solid var(--border);
+    margin: 16px 0;
+    text-shadow: 0 0 10px rgba(0,255,157,0.5);
+  }
+
+  .hint-text {
+    font-size: 12px;
+    color: var(--muted);
+    opacity: 0.35;
+    font-style: italic;
+    margin-top: 16px;
+    transition: opacity 0.4s;
+    cursor: help;
+  }
+  .hint-text:hover { opacity: 0.7; }
+
+  .mislead-hints {
+    display: flex;
+    gap: 12px;
+    margin-top: 10px;
+    flex-wrap: wrap;
+  }
+  .mislead {
+    font-size: 11px;
+    padding: 4px 10px;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    opacity: 0.4;
+    cursor: default;
+  }
+
+  /* answer area */
+  .answer-area {
+    margin-top: 24px;
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    width: 100%;
+  }
+  .ans-input {
+    flex: 1;
+    min-width: 0;
+    height: 48px;
+    background: #030b0b;
+    border: 1px solid var(--border);
+    color: var(--green);
+    font-family: var(--font-mono);
+    font-size: 16px;
+    letter-spacing: 4px;
+    padding: 14px 18px;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    text-transform: uppercase;
+  }
+  .ans-input::placeholder { color: var(--muted); text-transform: none; letter-spacing: 1px; }
+  .ans-input:focus {
+    border-color: var(--green-dim);
+    box-shadow: 0 0 0 1px var(--green-dim), inset 0 0 20px rgba(0,255,157,0.03);
+  }
+  .ans-input.shake { animation: shake 0.4s ease; }
+  .ans-input.correct-flash { animation: correctFlash 0.5s ease; }
+
+  .submit-btn {
+    height: 48px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--font-display);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 3px;
+    color: var(--bg);
+    background: var(--green-dim);
+    border: none;
+    padding: 14px 22px;
+    cursor: pointer;
+    transition: background 0.2s;
+    outline: none;
+    white-space: nowrap;
+  }
+  .submit-btn:hover { background: var(--green); }
+
+  .answer-area input,
+  .answer-area button {
+    height: 48px;
+  }
+
+  /* feedback */
+  .feedback {
+    margin-top: 12px;
+    font-size: 12px;
+    letter-spacing: 2px;
+    min-height: 20px;
+    transition: all 0.3s;
+  }
+  .feedback.wrong { color: var(--red); }
+  .feedback.right { color: var(--green); }
+
+  /* ─── FINAL ANSWER PAGE ─── */
+  .final-card {
+    background: var(--surface);
+    border: 1px solid var(--green-dim);
+    padding: 40px;
+    text-align: center;
+    position: relative;
+    animation: cardIn 0.6s ease both;
+    max-width: 560px;
+    width: 100%;
+  }
+  .final-card::before {
+    content: '';
+    position: absolute;
+    inset: -1px;
+    background: linear-gradient(135deg, var(--green), transparent, var(--green));
+    z-index: -1;
+    opacity: 0.15;
+  }
+
+  .final-title {
+    font-family: var(--font-display);
+    font-size: 14px;
+    letter-spacing: 6px;
+    color: var(--green);
+    margin-bottom: 8px;
+  }
+  .final-sub {
+    font-size: 13px;
+    color: var(--muted);
+    letter-spacing: 2px;
+    margin-bottom: 32px;
+  }
+  .final-input-wrap {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    align-items: center;
+  }
+  .final-input {
+    width: 100%;
+    background: #030b0b;
+    border: 1px solid var(--green-dim);
+    color: var(--green);
+    font-family: var(--font-mono);
+    font-size: 15px;
+    letter-spacing: 3px;
+    padding: 16px 20px;
+    outline: none;
+    text-align: center;
+    text-transform: uppercase;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  .final-input:focus {
+    border-color: var(--green);
+    box-shadow: 0 0 0 1px var(--green);
+  }
+
+  /* ─── ACCESS GRANTED ─── */
+  #granted-page {
+    text-align: center;
+    gap: 20px;
+  }
+  .granted-ring {
+    width: 120px; height: 120px;
+    border: 2px solid var(--green);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 28px;
+    box-shadow: 0 0 30px rgba(0,255,157,0.4), inset 0 0 30px rgba(0,255,157,0.05);
+    animation: ringPulse 2s ease-in-out infinite;
+  }
+  .granted-ring svg { width: 48px; height: 48px; }
+
+  .granted-title {
+    font-family: var(--font-display);
+    font-size: clamp(28px, 6vw, 52px);
+    font-weight: 900;
+    letter-spacing: 8px;
+    color: var(--green);
+    text-shadow: 0 0 30px rgba(0,255,157,0.8), 0 0 80px rgba(0,255,157,0.3);
+    animation: grantedGlow 2s ease-in-out infinite alternate;
+  }
+  .granted-sub {
+    font-size: 14px;
+    letter-spacing: 3px;
+    color: var(--muted);
+    margin-top: 8px;
+  }
+  .contact-box {
+    margin-top: 36px;
+    border: 1px solid var(--border);
+    padding: 24px 36px;
+    background: var(--surface);
+    max-width: 480px;
+    width: 100%;
+  }
+  .contact-label {
+    font-size: 10px;
+    letter-spacing: 5px;
+    color: var(--muted);
+    margin-bottom: 12px;
+  }
+  .contact-code {
+    font-family: var(--font-vt);
+    font-size: 22px;
+    letter-spacing: 4px;
+    color: var(--green);
+    background: #030b0b;
+    padding: 12px 20px;
+    display: inline-block;
+    border: 1px solid var(--border);
+    text-shadow: 0 0 8px rgba(0,255,157,0.5);
+  }
+  .contact-instr {
+    font-size: 12px;
+    color: var(--muted);
+    margin-top: 14px;
+    opacity: 0.7;
+    letter-spacing: 1px;
+  }
+
+  /* ─── KEYFRAMES ─── */
+  @keyframes glitch1 {
+    0%,94%,100% { transform: none; opacity: 0; }
+    95% { transform: translateX(-3px) skewX(-2deg); opacity: 0.7; }
+    97% { transform: translateX(3px) skewX(2deg); opacity: 0.7; }
+  }
+  @keyframes glitch2 {
+    0%,89%,100% { transform: none; opacity: 0; }
+    90% { transform: translateX(3px); opacity: 0.6; }
+    92% { transform: translateX(-2px); opacity: 0.6; }
+  }
+  @keyframes titlePulse {
+    0%,100% { text-shadow: 0 0 20px rgba(0,255,157,0.8), 0 0 60px rgba(0,255,157,0.3); }
+    50% { text-shadow: 0 0 30px rgba(0,255,157,1), 0 0 80px rgba(0,255,157,0.5), 0 0 140px rgba(0,255,157,0.2); }
+  }
+  @keyframes subGlitch {
+    0%,95%,100% { transform: none; opacity: 1; }
+    96% { transform: translateX(4px); opacity: 0.7; letter-spacing: 5px; }
+    98% { transform: translateX(-2px); opacity: 0.9; }
+  }
+  @keyframes flicker {
+    0%,98%,100% { opacity: 1; }
+    99% { opacity: 0.2; }
+  }
+  @keyframes cardIn {
+    from { opacity: 0; transform: translateY(16px); }
+    to { opacity: 1; transform: none; }
+  }
+  @keyframes shake {
+    0%,100% { transform: translateX(0); }
+    20% { transform: translateX(-8px); }
+    40% { transform: translateX(8px); }
+    60% { transform: translateX(-5px); }
+    80% { transform: translateX(5px); }
+  }
+  @keyframes correctFlash {
+    0% { border-color: var(--border); }
+    50% { border-color: var(--green); box-shadow: 0 0 20px rgba(0,255,157,0.4); }
+    100% { border-color: var(--green); }
+  }
+  @keyframes ringPulse {
+    0%,100% { box-shadow: 0 0 30px rgba(0,255,157,0.4), inset 0 0 30px rgba(0,255,157,0.05); }
+    50% { box-shadow: 0 0 60px rgba(0,255,157,0.7), inset 0 0 40px rgba(0,255,157,0.1); }
+  }
+  @keyframes grantedGlow {
+    from { text-shadow: 0 0 20px rgba(0,255,157,0.6); }
+    to { text-shadow: 0 0 40px rgba(0,255,157,1), 0 0 100px rgba(0,255,157,0.5); }
+  }
+  @keyframes fadeIn {
+    from { opacity: 0; transform: scale(0.95); }
+    to { opacity: 1; transform: none; }
+  }
+
+  /* scrollbar */
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+  /* selection */
+  ::selection { background: rgba(0,255,157,0.2); color: var(--text); }
+
+  /* disable text selection on sensitive areas */
+  .no-select { user-select: none; -webkit-user-select: none; }
+</style>
+</head>
+<body>
+<div class="grid-bg"></div>
+
+<!-- HOME PAGE -->
+<div class="page" id="home">
+  <div class="null-badge no-select">[ CLASSIFIED SYSTEM ]</div>
+  <div class="title-wrap">
+    <h1 class="main-title no-select" data-text="PROJECT NULL">PROJECT NULL</h1>
+  </div>
+  <p class="subtitle no-select" id="sub-glitch">Only those who think differently proceed</p>
+  <p class="prize-line no-select">SOLVE THE PUZZLE AND WIN <span>₹11</span></p>
+  <button class="btn" id="enter-btn">ENTER PUZZLE</button>
+</div>
+
+<!-- PUZZLE PAGE -->
+<div class="page hidden" id="puzzle-page">
+  <div class="puzzle-shell">
+    <div class="progress-row no-select">
+      <span class="progress-label">PROGRESS</span>
+      <div class="progress-track"><div class="progress-fill" id="prog-fill" style="width:0%"></div></div>
+      <div class="level-dots" id="ldots">
+        <div class="ldot" id="d0"></div>
+        <div class="ldot" id="d1"></div>
+        <div class="ldot" id="d2"></div>
+        <div class="ldot" id="d3"></div>
+      </div>
+    </div>
+    <div id="puzzle-mount"></div>
+  </div>
+</div>
+
+<!-- FINAL ANSWER PAGE -->
+<div class="page hidden" id="final-page">
+  <div class="final-card">
+    <div class="final-title">ALL LEVELS CLEARED</div>
+    <div class="final-sub">ENTER THE FINAL MESSAGE TO PROCEED</div>
+    <div class="final-input-wrap">
+      <input class="final-input" id="final-input" type="text" placeholder="Enter final message" autocomplete="off" spellcheck="false">
+      <button class="btn" id="final-submit">SUBMIT</button>
+      <div class="feedback" id="final-feedback"></div>
+      <p class="hint-text" id="final-hint" style="margin-top:10px;min-height:18px;"></p>
+    </div>
+  </div>
+</div>
+
+<!-- ACCESS GRANTED PAGE -->
+<div class="page hidden" id="granted-page">
+  <div class="granted-ring">
+    <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M10 25l10 10 18-20" stroke="#00ff9d" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+  </div>
+  <div class="granted-title">ACCESS GRANTED</div>
+  <div class="granted-sub">YOU HAVE PROVEN YOUR WORTH</div>
+  <div class="contact-box">
+    <div class="contact-label">YOUR VERIFICATION CODE</div>
+    <div class="contact-code" id="win-code">NULL-2026-SEEKER</div>
+    <div class="contact-instr">Contact Jees with this code to claim your reward.</div>
+  </div>
+</div>
+
+<script>
+// ─── ANTI-INSPECTION ───────────────────────────────────────────────
+(function(){
+  // disable right-click
+  document.addEventListener('contextmenu', function(e){ e.preventDefault(); return false; });
+
+  // disable devtools keys
+  document.addEventListener('keydown', function(e){
+    if(
+      e.key === 'F12' ||
+      (e.ctrlKey && e.shiftKey && ['I','i','J','j','C','c'].includes(e.key)) ||
+      (e.ctrlKey && ['U','u'].includes(e.key)) ||
+      (e.ctrlKey && e.shiftKey && e.key === 'K')
+    ){
+      e.preventDefault();
+      e.stopPropagation();
+      return false;
+    }
+  });
+
+  var _dt = false;
+  var triggerCount = 0;
+  setInterval(function(){
+    var t = performance.now();
+    debugger;
+    if(performance.now() - t > 500){
+      triggerCount++;
+      if(triggerCount > 2){
+        if(!_dt){
+          _dt = true;
+          document.body.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100vh;font-family:monospace;color:#ff2d55;font-size:20px;letter-spacing:4px;background:#020505;">ACCESS VIOLATION DETECTED</div>';
+        }
+      }
+    }
+  }, 2000);
+})();
+
+// ─── UTILITY ──────────────────────────────────────────────────────
+var _$ = function(id){ return document.getElementById(id); };
+
+function _xd(s){ return atob(s); }
+
+function _hv(a, b){
+  var x = a.trim().toUpperCase();
+  return btoa(x) === b;
+}
+
+// ─── PUZZLE DATA (encoded, not plain) ─────────────────────────────
+// Answers stored only as btoa of uppercase value; never plaintext
+// L1: btoa("25")       = "MjU="
+// L2: btoa("SEEK")     = "U0VFSw=="
+// L3: btoa("THE")      = "VEhF"
+// L4: btoa("TRUTH")    = "VFJVVEg="
+// Final: btoa("SEEK THE TRUTH") = "U0VFSyBUSEUgVFJVVEg="
+
+var _lk = [
+  [77,106,85,61],                                                    // "25"             → "MjU="
+  [85,48,86,70,83,119,61,61],                                        // "SEEK"           → "U0VFSw=="
+  [86,69,104,70],                                                    // "THE"            → "VEhF"
+  [86,70,74,86,86,69,103,61],                                        // "TRUTH"          → "VFJVVEg="
+  [85,48,86,70,83,121,66,85,83,69,85,103,86,70,74,86,86,69,103,61]  // "SEEK THE TRUTH" → "U0VFSyBUSEUgVFJVVEg="
+];
+
+function _rk(arr){ return arr.map(function(c){ return String.fromCharCode(c); }).join(''); }
+
+function _ck(idx, val){
+  return btoa(val.trim().toUpperCase()) === _rk(_lk[idx]);
+}
+
+// ─── STATE ────────────────────────────────────────────────────────
+var _st = { lvl: 0, done: [false,false,false,false] };
+
+function _sv(){ try{ sessionStorage.setItem('_pnx', btoa(JSON.stringify(_st))); }catch(e){} }
+function _lv(){
+  try{
+    var d = sessionStorage.getItem('_pnx');
+    if(d){ _st = JSON.parse(atob(d)); }
+  }catch(e){}
+}
+_lv();
+
+// ─── PUZZLE RENDERERS ─────────────────────────────────────────────
+function _p0(){
+  return [
+    '<div class="puzzle-card">',
+    '<div class="level-tag">LEVEL 01 / 04</div>',
+    '<div class="puzzle-title">NUMBER LOGIC</div>',
+    '<div class="puzzle-content">',
+    '<p style="color:var(--muted);font-size:13px;margin-bottom:16px;">Identify the pattern. Find the missing value.</p>',
+    '<div class="sequence-display">3 → 9 &nbsp; 4 → 16 &nbsp; 5 → ?</div>',
+    '<p class="hint-text">↯ numbers repeat but not the same way</p>',
+    '</div>',
+    '<div class="answer-area">',
+    '<input class="ans-input" id="ai0" type="text" placeholder="Enter your answer" autocomplete="off" spellcheck="false" maxlength="10">',
+    '<button class="submit-btn" id="sb0">CHECK</button>',
+    '</div>',
+    '<div class="feedback" id="fb0"></div>',
+    '</div>'
+  ].join('');
+}
+
+function _p1(){
+  return [
+    '<div class="puzzle-card">',
+    '<div class="level-tag">LEVEL 02 / 04</div>',
+    '<div class="puzzle-title">BROKEN BINARY</div>',
+    '<div class="puzzle-content">',
+    '<p style="color:var(--muted);font-size:13px;margin-bottom:16px;">Decode.</p>',
+    '<div class="sequence-display" style="font-size:18px;letter-spacing:4px;">01010011 &nbsp;1000101 &nbsp;01000101 &nbsp;1001011</div>',
+    '<p class="hint-text">↯ not all bits are complete</p>',
+    '</div>',
+    '<div class="answer-area">',
+    '<input class="ans-input" id="ai1" type="text" placeholder="Decoded word" autocomplete="off" spellcheck="false" maxlength="20">',
+    '<button class="submit-btn" id="sb1">CHECK</button>',
+    '</div>',
+    '<div class="feedback" id="fb1"></div>',
+    '</div>'
+  ].join('');
+}
+
+function _p2(){
+  var code = [
+    '#include &lt;stdio.h&gt;',
+    'int main() {',
+    '    char w[] = {\'T\',\'R\',\'U\',\'T\',\'H\'};',
+    '    printf("%c%c%c", w[0], w[4], w[4] - 3);',
+    '    return 0;',
+    '}'
+  ].join('\n');
+  return [
+    '<div class="puzzle-card">',
+    '<div class="level-tag">LEVEL 03 / 04</div>',
+    '<div class="puzzle-title">C PUZZLE</div>',
+    '<div class="puzzle-content">',
+    '<p style="color:var(--muted);font-size:13px;margin-bottom:16px;">What does this program output?</p>',
+    '<div class="code-block">'+code+'</div>',
+    '<p class="hint-text">↯ think beyond the array</p>',
+    '</div>',
+    '<div class="answer-area">',
+    '<input class="ans-input" id="ai2" type="text" placeholder="Program output" autocomplete="off" spellcheck="false" maxlength="10">',
+    '<button class="submit-btn" id="sb2">CHECK</button>',
+    '</div>',
+    '<div class="feedback" id="fb2"></div>',
+    '</div>'
+  ].join('');
+}
+
+function _p3(){
+  return [
+    '<div class="puzzle-card">',
+    '<div class="level-tag">LEVEL 04 / 04</div>',
+    '<div class="puzzle-title">CIPHER SHIFT</div>',
+    '<div class="puzzle-content">',
+    '<p style="color:var(--muted);font-size:13px;margin-bottom:16px;">Decode the message.</p>',
+    '<div class="sequence-display" style="font-size:32px;letter-spacing:10px;">W U X W K</div>',
+    '<p class="hint-text">↯ shift (3)</p>',
+    '</div>',
+    '<div class="answer-area">',
+    '<input class="ans-input" id="ai3" type="text" placeholder="Decoded word" autocomplete="off" spellcheck="false" maxlength="20">',
+    '<button class="submit-btn" id="sb3">CHECK</button>',
+    '</div>',
+    '<div class="feedback" id="fb3"></div>',
+    '</div>'
+  ].join('');
+}
+
+var _pfns = [_p0, _p1, _p2, _p3];
+
+// ─── UI HELPERS ───────────────────────────────────────────────────
+function _upd(){
+  var completed = _st.done.filter(Boolean).length;
+  var pct = (completed / 4) * 100;
+  var fill = _$('prog-fill');
+  if(fill) fill.style.width = pct + '%';
+  for(var i=0; i<4; i++){
+    var d = _$('d'+i);
+    if(d){
+      if(_st.done[i]) d.classList.add('active');
+      else d.classList.remove('active');
+    }
+  }
+}
+
+function _showPage(id){
+  ['home','puzzle-page','final-page','granted-page'].forEach(function(p){
+    var el = _$(p);
+    if(el){
+      if(p === id){ el.classList.remove('hidden'); }
+      else { el.classList.add('hidden'); }
+    }
+  });
+}
+
+function _wrong(inputId, fbId, msg){
+  var inp = _$(inputId);
+  var fb = _$(fbId);
+  if(inp){ inp.classList.add('shake'); setTimeout(function(){ inp.classList.remove('shake'); }, 500); }
+  if(fb){ fb.textContent = msg || '// INCORRECT — TRY AGAIN'; fb.className = 'feedback wrong'; }
+}
+
+function _right(inputId, fbId){
+  var inp = _$(inputId);
+  var fb = _$(fbId);
+  if(inp){ inp.disabled = true; inp.classList.add('correct-flash'); }
+  if(fb){ fb.textContent = '// ACCESS GRANTED — LEVEL CLEARED'; fb.className = 'feedback right'; }
+}
+
+// ─── PUZZLE LOAD ──────────────────────────────────────────────────
+function _loadPuzzle(n){
+  var mnt = _$('puzzle-mount');
+  if(!mnt) return;
+  mnt.innerHTML = _pfns[n]();
+  _upd();
+  _bindLevel(n);
+  // restore visual state if this level was already completed (e.g. after refresh)
+  if(_st.done[n]){
+    _right('ai'+n,'fb'+n);
+  }
+  // scroll to top
+  var pp = _$('puzzle-page');
+  if(pp) pp.scrollTop = 0;
+}
+
+function _bindLevel(n){
+  var sb = _$('sb'+n);
+  var ai = _$('ai'+n);
+
+  if(ai){ ai.addEventListener('keydown', function(e){ if(e.key==='Enter'){ _checkAnswer(n); } }); }
+  if(sb){ sb.addEventListener('click', function(){ _checkAnswer(n); }); }
+}
+
+function _checkAnswer(n){
+  var ai = _$('ai'+n);
+  if(!ai) return;
+  if(ai.disabled) return;
+  ai.disabled = true;
+  setTimeout(function(){
+    if(!_st.done[n]) ai.disabled = false;
+  }, 400);
+  var val = ai.value;
+  if(!val.trim()){ _wrong('ai'+n,'fb'+n,'// ENTER AN ANSWER'); return; }
+
+  if(_ck(n, val)){
+    _right('ai'+n,'fb'+n);
+    setTimeout(function(){
+      _st.done[n] = true;
+      _sv();
+      if(n < 3){
+        _st.lvl = n+1;
+        _sv();
+        _loadPuzzle(n+1);
+      } else {
+        _st.lvl = 4;
+        _sv();
+        _showPage('final-page');
+        _bindFinal();
+      }
+    }, 700);
+  } else {
+    var msgs = [
+      "// INCORRECT — TRY AGAIN",
+      "// NOT QUITE — THINK AGAIN",
+      "// INVALID PATTERN",
+      "// SIGNAL NOT MATCHED"
+    ];
+    _wrong('ai'+n,'fb'+n, msgs[Math.floor(Math.random()*msgs.length)]);
+  }
+}
+
+// ─── FINAL CHECK ─────────────────────────────────────────────────
+function _bindFinal(){
+  var fi = _$('final-input');
+  var fs = _$('final-submit');
+  var ff = _$('final-feedback');
+  var fh = _$('final-hint');
+  if(fi){
+    fi.addEventListener('keydown', function(e){ if(e.key==='Enter'){ _checkFinal(); } });
+    fi.addEventListener('input', function(){
+      if(!fh) return;
+      var v = fi.value.trim();
+      if(v.length === 0)       fh.textContent = '';
+      else if(v.length < 4)   fh.textContent = '↯ no numbers needed';
+      else if(v.length < 10)  fh.textContent = '↯ no numbers, think in words';
+      else                    fh.textContent = '↯ no numbers — meaningful sentence';
+    });
+  }
+  if(fs){ fs.addEventListener('click', _checkFinal); }
+}
+
+function _checkFinal(){
+  var fi = _$('final-input');
+  var ff = _$('final-feedback');
+  if(!fi) return;
+  var v = fi.value.trim().replace(/\s+/g, ' ').toUpperCase();
+  if(btoa(v) === _rk(_lk[4])){
+    if(ff){ ff.textContent = '// DECRYPTING...'; ff.className='feedback right'; }
+    setTimeout(function(){ _showPage('granted-page'); }, 900);
+  } else {
+    if(fi){ fi.classList.add('shake'); setTimeout(function(){ fi.classList.remove('shake'); },500); }
+    if(ff){ ff.textContent = '// SEQUENCE REJECTED — RECONSIDER'; ff.className='feedback wrong'; }
+  }
+}
+
+// ─── INIT ─────────────────────────────────────────────────────────
+(function(){
+  _$('enter-btn').addEventListener('click', function(){
+    _showPage('puzzle-page');
+    // resume state
+    if(_st.lvl === 4){
+      _showPage('final-page');
+      _bindFinal();
+    } else {
+      _loadPuzzle(_st.lvl || 0);
+    }
+  });
+
+  // rebuild subtitle glitch chars randomly
+  var phrases = [
+    "Only those who think differently proceed",
+    "The answer is hidden in plain sight",
+    "Question everything you see",
+    "Can you find the signal?"
+  ];
+  var si = 0;
+  setInterval(function(){
+    var el = _$('sub-glitch');
+    if(el && Math.random() > 0.7){
+      si = (si+1) % phrases.length;
+      // don't change the main phrase
+    }
+  }, 4000);
+})();
+</script>
+</body>
+</html>
