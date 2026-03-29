@@ -8,7 +8,7 @@
 
 ## 🚀 Live demo 
 
-project-null-nu.vercel.app
+https://project-null-nu.vercel.app/
 
 ---
 
